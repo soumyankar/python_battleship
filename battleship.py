@@ -67,6 +67,10 @@ class BattleshipBoard():
                     continue
 
             self.ships[f"{y}{x}"] = True
+            if is_vertical:
+                self.ships[f"{y+1}{x}"] = True
+            else:
+                self.ships[f"{y}{x+1}"] = True
             reroll = False
 
 
@@ -88,7 +92,7 @@ class BattleshipBoard():
             print(self.y_axis[i], end=") ")
             for j in range(self.battle_board_size):
                 if self.battle_board[i][j] == "O":
-                        print(".", end=" ")
+                    print(".", end=" ")
                 else:
                     print(self.battle_board[i][j], end=" ")
             print("")
