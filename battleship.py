@@ -1,92 +1,136 @@
 import random
 import time
-# Global variable for battle_board
-battle_board = [[]]
-# Global variable for battle board size
-# As per the assignment, we need a 8x8 board hence:
-battle_board_size = 8
-# Global variable for number of battleships to place
-# As per assignment, we need to place 5 ships on board
-num_of_battleships = 5
-# Global variable for bombs_count
-bomb_count = 50
-# Global variable for game over
-game_over = False
-# Global variable for number of battle-ships destroyed
-num_of_battleships_destroyed = 0
-# Global variable for battleship_coordinates
-battleship_coordinates = [[]]
-# Cool way of printing a board with characters
-# Global variable for y_axis
-y_axis = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+import os
 
-# So initially the battle_board should be initialized as:
-# 1 1 1 1 1 1
-# 1 1 1 1 1 1
-# ...
-# 1 1 1 1 1 1
-# Something like that, and when a element is bombed by user,
-# the element value changnes from 1 to 0.
-# Initial function to just print the battle_board
-def print_battle_board():
-    """Will print the grid with rows A-J and columns 0-9"""
-    global battle_board
-    global y_axis
+class BattleshipBoard():
+    """Class to maintain state and information about the running game"""
+    battle_board = []
+    user_guesses = []
+    user_time_out = False
+    ships = {} # dict containing placements
+    ship_hit_counter = 0
+    y_axis = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    # Splitting the Y_axis variables dependinng on how large the board size will be.
-    y_axis = y_axis[0: len(battle_board) + 1]
+    def __init__(self):
+        self.battle_board_size = int(os.environ.get("GRID_SIZE", 8))
+        self.num_battleships = 5
+        self.battleship_size = 2
+        self.bomb_count = 50
+        random.seed(time.time())
 
-    for i in range(len(battle_board)):
-        print(y_axis[i], end=") ")
-        for j in range(len(battle_board[i])):
-            if battle_board[i][j] == "O":
-                    print(".", end=" ")
+
+    @property
+    def is_running(self):
+        if self.bomb_count <= 0:
+            return False
+        if self.ship_hit_counter >= (self.num_battleships * self.battleship_size):
+            return False
+        if self.user_time_out:
+            return False
+
+        return True
+        
+
+
+    def make_battle_board(self):
+        rows, cols = (self.battle_board_size, self.battle_board_size)
+
+        for i in range(rows):
+            new_row = []
+            for j in range(cols):
+                new_row.append(".")
+            self.battle_board.append(new_row)
+
+        for i in range(self.num_battleships):
+            self.place_ship()
+
+
+    # Random roll between 0-1 to determine verticality, then place ship
+    # at either ([y][x], [y+1][x]), or ([y][x], [y][x+1])
+    # after checking if a ship is in that position and the board bounds
+    def place_ship(self):
+        # don't allow out of bounds
+        reroll = True
+
+        while reroll:
+            y = random.randrange(self.battle_board_size-1)
+            x = random.randrange(self.battle_board_size-1)
+            is_vertical = (random.choice([0, 1]) == 1)
+
+            # TODO: only supports ships of length 2
+            if is_vertical:
+                # if a ship exists in the spot then reroll
+                if f"{y}{x}" in self.ships or f"{y+1}{x}" in self.ships:
+                    continue # move to next iteration
             else:
-                print(battle_board[i][j], end=" ")
+                if f"{y}{x}" in self.ships or f"{y}{x+1}" in self.ships:
+                    continue
+
+            self.ships[f"{y}{x}"] = True
+            reroll = False
+
+
+
+    # So initially the battle_board should be initialized as:
+    # 1 1 1 1 1 1
+    # 1 1 1 1 1 1
+    # ...
+    # 1 1 1 1 1 1
+    # Something like that, and when a element is bombed by user,
+    # the element value changnes from 1 to 0.
+    # Initial function to just print the battle_board
+    def print_battle_board(self):
+        """Will print the grid with rows A-J and columns 0-9"""
+
+        # TODO: Determine what to print when: bombed water, bombed ship,
+        # or not yet guessed by player
+        for i in range(self.battle_board_size):
+            print(self.y_axis[i], end=") ")
+            for j in range(self.battle_board_size):
+                if self.battle_board[i][j] == "O":
+                        print(".", end=" ")
+                else:
+                    print(self.battle_board[i][j], end=" ")
+            print("")
+
+        print("  ", end=" ") # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacign of 3 characters
+        # Now we print the x_axis coordinates on the bottom of the board
+        for i in range(len(self.battle_board[0])):
+            print(str(i+1), end=" ")
+        # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
         print("")
 
-    print("  ", end=" ") # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacign of 3 characters
-    # Now we print the x_axis coordinates on the bottom of the board
-    for i in range(len(battle_board[0])):
-        print(str(i), end=" ")
-    # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
-    print("")
 
-def make_battle_board():
-    global battle_board
-    global battle_board_size
-    global num_of_battleships
-    global battleship_coordinates
+    # 60 second timeout. Ideally input is stored in a (y, x) tuple but I aint yo momma
+    def handle_user_input(self):
+        pass
 
-    random.seed(time.time())
 
-    rows, cols = (battle_board_size, battle_board_size)
+    def main_game_loop(self):
+        """Main entry point of application that runs the game loop"""
 
-    battle_board = []
-    for i in range(rows):
-        new_row = []
-        for j in range(cols):
-            new_row.append(".")
-        battle_board.append(new_row)
+        self.make_battle_board()
 
-def main():
-    """Main entry point of application that runs the game loop"""
-    global game_over
+        print("Attempt #1 at Battleships")
+        print(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
 
-    print("Attempt #1 at Battleships")
-    print('You have %d bomb(s) left to take down %d battleships' % (bomb_count, num_of_battleships))
+        self.print_battle_board()
+        self.handle_user_input()
+        
+        self.bomb_count = 0 # temp debug code
 
-    make_battle_board()
-    print_battle_board()
-    # while game_over is False:
-    #     print_grid()
-    #     print("Number of ships remaining: " + str(num_of_ships - num_of_ships_sunk))
-    #     print("Number of bullets left: " + str(bullets_left))
-    #     shoot_bullet()
-    #     print("----------------------------")
-    #     print("")
-    #     check_for_game_over()
+
+    def display_game_over(self):
+        pass
+
+    def display_game_won(self):
+        pass
 
 
 if __name__ == '__main__':
-    main()
+    battleship = BattleshipBoard()
+
+    while battleship.is_running:
+        battleship.main_game_loop()
+
+    
