@@ -14,8 +14,9 @@ class BattleshipBoard():
     def __init__(self):
         self.battle_board_size = int(os.environ.get("GRID_SIZE", 8))
         self.num_battleships = 5
-        self.battleship_size = 2
+        self.battleship_size = int(os.environ.get("SHIP_SIZE", 4))
         self.bomb_count = 50
+        self.debug = (int(os.environ.get("DEBUG", 0)) == 1) #Set to 1 for debug logging
         random.seed(time.time())
 
 
@@ -49,29 +50,31 @@ class BattleshipBoard():
     # at either ([y][x], [y+1][x]), or ([y][x], [y][x+1])
     # after checking if a ship is in that position and the board bounds
     def place_ship(self):
-        # don't allow out of bounds
-        reroll = True
+        # don't allow out of bounds, by only allowing placement at border - N - 1
+        y = random.randrange(self.battle_board_size-(self.battleship_size-1))
+        x = random.randrange(self.battle_board_size-(self.battleship_size-1))
+        is_vertical = (random.choice([0, 1]) == 1)
 
-        while reroll:
-            y = random.randrange(self.battle_board_size-1)
-            x = random.randrange(self.battle_board_size-1)
-            is_vertical = (random.choice([0, 1]) == 1)
+        placement_positions = []
 
-            # TODO: only supports ships of length 2
+        for i in range(self.battleship_size):
             if is_vertical:
                 # if a ship exists in the spot then reroll
-                if f"{y}{x}" in self.ships or f"{y+1}{x}" in self.ships:
-                    continue # move to next iteration
+                if f"{y+i}{x}" in self.ships:
+                    return self.place_ship() # recursively move to next iteration
+                else:
+                    placement_positions.append(f"{y+i}{x}")
             else:
-                if f"{y}{x}" in self.ships or f"{y}{x+1}" in self.ships:
-                    continue
+                if f"{y}{x+i}" in self.ships:
+                    return self.place_ship()
+                else:
+                    placement_positions.append(f"{y}{x+i}")
 
-            self.ships[f"{y}{x}"] = True
-            if is_vertical:
-                self.ships[f"{y+1}{x}"] = True
-            else:
-                self.ships[f"{y}{x+1}"] = True
-            reroll = False
+        # no collisions, we can place the ship
+        for s in range(len(placement_positions)):
+            self.ships[placement_positions[s]] = True
+
+        return True
 
 
 
@@ -93,6 +96,8 @@ class BattleshipBoard():
             for j in range(self.battle_board_size):
                 if self.battle_board[i][j] == "O":
                     print(".", end=" ")
+                elif self.debug and f"{i}{j}" in self.ships: # print ship placement
+                    print("S", end=" ")
                 else:
                     print(self.battle_board[i][j], end=" ")
             print("")
