@@ -113,14 +113,6 @@ class BattleshipBoard():
         except TimeoutOccurred:
             print('timeout!',nseconds,'seconds passed')
             self.user_time_out = True
-        """
-        countdown_is_okay = 60
-        while countdown_is_okay:
-            user_input = input('Input a space where you want to throw a bomb: ')
-            print('hello', countdown_is_okay)
-            countdown_is_okay -= 1
-            return
-        """
 
     def main_game_loop(self):
         """Main entry point of application that runs the game loop"""
