@@ -1,3 +1,4 @@
+from inputimeout import inputimeout, TimeoutOccurred
 import random
 import time
 import os
@@ -30,8 +31,6 @@ class BattleshipBoard():
             return False
 
         return True
-        
-
 
     def make_battle_board(self):
         rows, cols = (self.battle_board_size, self.battle_board_size)
@@ -44,7 +43,6 @@ class BattleshipBoard():
 
         for i in range(self.num_battleships):
             self.place_ship()
-
 
     # Random roll between 0-1 to determine verticality, then place ship
     # at either ([y][x], [y+1][x]), or ([y][x], [y][x+1])
@@ -75,8 +73,6 @@ class BattleshipBoard():
             self.ships[placement_positions[s]] = True
 
         return True
-
-
 
     # So initially the battle_board should be initialized as:
     # 1 1 1 1 1 1
@@ -109,11 +105,22 @@ class BattleshipBoard():
         # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
         print("")
 
-
     # 60 second timeout. Ideally input is stored in a (y, x) tuple but I aint yo momma
     def handle_user_input(self):
-        pass
-
+        nseconds = 5
+        try:
+            usr_inpu = inputimeout(prompt='Input a space where you want to throw a bomb: ', timeout=nseconds)
+        except TimeoutOccurred:
+            print('timeout!',nseconds,'seconds passed')
+            self.user_time_out = True
+        """
+        countdown_is_okay = 60
+        while countdown_is_okay:
+            user_input = input('Input a space where you want to throw a bomb: ')
+            print('hello', countdown_is_okay)
+            countdown_is_okay -= 1
+            return
+        """
 
     def main_game_loop(self):
         """Main entry point of application that runs the game loop"""
@@ -125,9 +132,8 @@ class BattleshipBoard():
 
         self.print_battle_board()
         self.handle_user_input()
-        
-        self.bomb_count = 0 # temp debug code
 
+        self.bomb_count = 0 # temp debug code
 
     def display_game_over(self):
         pass
