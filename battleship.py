@@ -69,7 +69,7 @@ class BattleshipBoard():
 
         # no collisions, we can place the ship
         for s in range(len(placement_positions)):
-            self.ships[placement_positions[s]] = "O"
+            self.ships[placement_positions[s]] = True
     
         return True
 
