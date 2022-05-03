@@ -12,13 +12,14 @@ class BattleshipBoard():
     game_over = False
     ships = {} # dict containing placements
     ship_hit_counter = 0
+    num_of_ships_destroyed = 0
     y_axis = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
     def __init__(self):
         self.battle_board_size = int(os.environ.get("GRID_SIZE", 8))
-        self.num_battleships = 5 #TODO make it 50 
+        self.num_battleships = 5
         self.battleship_size = int(os.environ.get("SHIP_SIZE", 4))
-        self.bomb_count = 5
+        self.bomb_count = 50
         self.debug = (int(os.environ.get("DEBUG", 0)) == 1) #Set to 1 for debug logging
         random.seed(time.time())
 
@@ -31,6 +32,12 @@ class BattleshipBoard():
             return False
 
         return True
+
+    def display_message(self,message):
+        print("")
+        print("------------------------------------------------------------------------------------------")
+        print(message)
+        print("------------------------------------------------------------------------------------------")
 
     def make_battle_board(self):
         rows, cols = (self.battle_board_size, self.battle_board_size)
@@ -106,17 +113,74 @@ class BattleshipBoard():
         # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
         print("")
 
+    def check_bomb_placement_validity(self, usr_input):
+        usr_input = str(usr_input).upper()
+        is_valid_bomb_target = False
+        error_message = 'ERROR: Please Enter a valid row(A-H) and column(0-7). Example: A5'
+        while is_valid_bomb_target is False:
+            ## checks if the user_input if the length of user input is 2 or not
+            if(len(usr_input) != 2):
+                self.display_message(error_message)
+                self.handle_user_input()
+                break
+            row = usr_input[0]
+            col = usr_input[1]
+            ## checks if the row is an alphabet and column is a number
+            if(not row.isalpha() or not col.isnumeric()):
+                self.display_message(error_message)
+                self.handle_user_input()
+                break
+            row = self.y_axis.find(row)
+            ##checks if the user entered row is outside of the battleboard
+            if not (-1 < row < self.battle_board_size):
+                self.display_message(error_message)
+                self.handle_user_input()
+                break
+            col = int(col)
+            ##checks if the user entered column is outside of the battleboard
+            if not (-1 < col < self.battle_board_size):
+                self.display_message(error_message)
+                self.handle_user_input()
+                break
+            if self.battle_board[row][col] == "#" or self.battle_board[row][col] == "X":
+                self.display_message("You have already shot a bomb here, pick somewhere else")
+                self.handle_user_input()
+                break
+            if self.battle_board[row][col] == ".":
+                is_valid_bomb_target = True
+                self.bomb_count = self.bomb_count - 1
+        return row,col
+
 
     ## updates the 8x8 board and the bomb count after the bomb is hit
     def update_battle_board_and_bomb_count(self, usr_input):
-        self.bomb_count = self.bomb_count - 1
-        print('@@@@@@@',usr_input)
+        row,col = self.check_bomb_placement_validity(usr_input)
+
+        #checks if the row,col value matches the key is ships dictionary
+        if (str(row)+str(col)) in self.ships:
+            self.display_message("It's a hit!! A battleship was hit by your bomb.")
+            self.ship_hit_counter += 1
+            self.battle_board[row][col] = "X"
+            if self.check_for_ship_destroyed(row, col):
+                self.display_message("Hell Yeah!! A ship was completely destroyed!")
+                self.num_of_ships_destroyed += 1
+        else:
+            self.display_message("It's a miss!! No battleship was hit.")
+            self.battle_board[row][col] = "#"
+        
+    ## TODO checks if a ship is completely destroyed
+    def check_for_ship_destroyed(self, row, col):
+        """If all parts of a shit have been shot it is destroyed we increment the num_of_ships_destroyed counter by 1"""
+        print("Hello I am a TODO")
+       
 
     # 60 second timeout. Ideally input is stored in a (y, x) tuple but I aint yo momma
     def handle_user_input(self):
         self.nseconds = 60
         try:
-            usr_input = inputimeout(prompt='Input a space where you want to throw a bomb: ', timeout=self.nseconds)
+            print(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
+            self.print_battle_board()
+            usr_input = inputimeout(prompt='"Enter row (A-H) and column (0-7) such as A5: " ', timeout=self.nseconds)
             self.update_battle_board_and_bomb_count(usr_input)
             
         except TimeoutOccurred:
@@ -126,15 +190,11 @@ class BattleshipBoard():
     def main_game_loop(self):
         """Main entry point of application that runs the game loop"""
         
-        self.make_battle_board()
-
-        
+        self.make_battle_board()    
         
         ## removed make_battle_board from the main game loop to prevent creating new board on every loop instance
         while self.is_running:
             # print("Attempt #1 at Battleships")
-            print(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
-            self.print_battle_board()
             self.handle_user_input()
 
             # self.bomb_count = 1 # temp debug code
