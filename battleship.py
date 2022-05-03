@@ -3,6 +3,7 @@ from inputimeout import inputimeout, TimeoutOccurred
 import random
 import time
 import os
+import sys
 
 class BattleshipBoard():
     """Class to maintain state and information about the running game"""
@@ -21,6 +22,7 @@ class BattleshipBoard():
         self.battleship_size = int(os.environ.get("SHIP_SIZE", 4))
         self.bomb_count = 50
         self.debug = (int(os.environ.get("DEBUG", 0)) == 1) #Set to 1 for debug logging
+        self.writer = BoardPrinter()
         random.seed(time.time())
 
 
@@ -34,10 +36,10 @@ class BattleshipBoard():
         return True
 
     def display_message(self,message):
-        print("")
-        print("------------------------------------------------------------------------------------------")
-        print(message)
-        print("------------------------------------------------------------------------------------------")
+        
+        self.writer.add_message_line("------------------------------------------------------------------------------------------")
+        self.writer.add_message_line(message)
+        self.writer.add_message_line("------------------------------------------------------------------------------------------")
 
     def make_battle_board(self):
         rows, cols = (self.battle_board_size, self.battle_board_size)
@@ -100,23 +102,26 @@ class BattleshipBoard():
         # or not yet guessed by player
         
         for i in range(self.battle_board_size):
-            print(self.y_axis[i], end=") ")
+            board_line = ""
+            board_line += self.y_axis[i] + " ) "
             for j in range(self.battle_board_size):
-                # print(self.battle_board[i][j])
                 if self.battle_board[i][j] == "O":
-                    print(".", end=" ")
+                    board_line += ". "
                 elif self.debug and f"{i}{j}" in self.ships and not self.ships[f"{i}{j}"]["hit"]: # print ship placement
-                    print("S", end=" ")
+                    board_line += "S "
                 else:
-                    print(self.battle_board[i][j], end=" ")
-            print("")
+                    board_line += self.battle_board[i][j] + " "
+            self.writer.add_line(board_line)
 
-        print("  ", end=" ") # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacing of 3 characters
+        board_line = ""
+        board_line += "   " # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacign of 3 characters
         # Now we print the x_axis coordinates on the bottom of the board
         for i in range(len(self.battle_board[0])):
-            print(str(i+1), end=" ")
+            board_line += str(i+1) + " "
+
+        self.writer.add_line(board_line)
         # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
-        print("")
+        self.writer.write()
 
     def check_bomb_placement_validity(self, usr_input):
         usr_input = str(usr_input).upper()
@@ -188,7 +193,7 @@ class BattleshipBoard():
     def handle_user_input(self):
         self.nseconds = 60
         try:
-            print(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
+            self.writer.add_line(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
             self.print_battle_board()
             usr_input = inputimeout(prompt='"Enter row (A-H) and column (0-7) such as A5: " ', timeout=self.nseconds)
             self.update_battle_board_and_bomb_count(usr_input)
@@ -204,7 +209,8 @@ class BattleshipBoard():
         
         ## removed make_battle_board from the main game loop to prevent creating new board on every loop instance
         while self.is_running:
-            # print("Attempt #1 at Battleships")
+            sys.stdout.flush()
+            self.writer.add_line("Attempt #1 at Battleships")
             self.handle_user_input()
 
             # self.bomb_count = 1 # temp debug code
@@ -216,7 +222,32 @@ class BattleshipBoard():
             self.game_over = True
         elif(self.bomb_count <= 0):
             print('Game Over.You have depleted all of your remaining bombs.')
-            self.game_over = True         
+            self.game_over = True    
+
+
+class BoardPrinter:
+    lines = []
+    message =[]
+
+    def add_line(self, line):
+        self.lines.append(line)
+
+    def add_message_line(self, line):
+        self.message.append(line)
+
+    def write(self):
+        for _ in range(50): # 50 is arbitrary, but enough
+            sys.stdout.write("\x1b[1A\x1b[2K") # move up cursor and delete whole line 
+
+        for i in range(len(self.lines)):
+            sys.stdout.write(self.lines[i] + "\n") 
+
+        for m in range(len(self.message)):
+            sys.stdout.write(self.message[m] + "\n") 
+
+        # reset for next run
+        self.lines = []  
+        self.message = []
 
 
 if __name__ == '__main__':
