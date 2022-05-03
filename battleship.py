@@ -75,8 +75,13 @@ class BattleshipBoard():
                     placement_positions.append(f"{y}{x+i}")
 
         # no collisions, we can place the ship
+        # Ship values are the entire array of positions,
+        # this is so each key returns the full ship
         for s in range(len(placement_positions)):
-            self.ships[placement_positions[s]] = True
+            self.ships[placement_positions[s]] = {
+                "hit": False,
+                "positions": placement_positions
+            }
     
         return True
 
@@ -86,7 +91,7 @@ class BattleshipBoard():
     # ...
     # 1 1 1 1 1 1
     # Something like that, and when a element is bombed by user,
-    # the element value changnes from 1 to 0.
+    # the element value changes from 1 to 0.
     # Initial function to just print the battle_board
     def print_battle_board(self):
         """Will print the grid with rows A-J and columns 0-9"""
@@ -100,13 +105,13 @@ class BattleshipBoard():
                 # print(self.battle_board[i][j])
                 if self.battle_board[i][j] == "O":
                     print(".", end=" ")
-                elif self.debug and f"{i}{j}" in self.ships: # print ship placement
+                elif self.debug and f"{i}{j}" in self.ships and not self.ships[f"{i}{j}"]["hit"]: # print ship placement
                     print("S", end=" ")
                 else:
                     print(self.battle_board[i][j], end=" ")
             print("")
 
-        print("  ", end=" ") # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacign of 3 characters
+        print("  ", end=" ") # This signifies the x_axis spacing because the rows above will have "A) ", and thus we need a character spacing of 3 characters
         # Now we print the x_axis coordinates on the bottom of the board
         for i in range(len(self.battle_board[0])):
             print(str(i+1), end=" ")
@@ -136,7 +141,7 @@ class BattleshipBoard():
                 self.display_message(error_message)
                 self.handle_user_input()
                 break
-            col = int(col)
+            col = int(col)-1 # off by one
             ##checks if the user entered column is outside of the battleboard
             if not (-1 < col < self.battle_board_size):
                 self.display_message(error_message)
@@ -161,6 +166,7 @@ class BattleshipBoard():
             self.display_message("It's a hit!! A battleship was hit by your bomb.")
             self.ship_hit_counter += 1
             self.battle_board[row][col] = "X"
+            self.ships[f"{row}{col}"]["hit"] = True
             if self.check_for_ship_destroyed(row, col):
                 self.display_message("Hell Yeah!! A ship was completely destroyed!")
                 self.num_of_ships_destroyed += 1
@@ -170,8 +176,12 @@ class BattleshipBoard():
         
     ## TODO checks if a ship is completely destroyed
     def check_for_ship_destroyed(self, row, col):
-        """If all parts of a shit have been shot it is destroyed we increment the num_of_ships_destroyed counter by 1"""
-        print("Hello I am a TODO")
+        """If all parts of a ship have been shot it is destroyed we increment the num_of_ships_destroyed counter by 1"""
+        for pos in self.ships[f"{row}{col}"]["positions"]:
+            if not self.ships[pos]["hit"]:
+                return False
+
+        return True
        
 
     # 60 second timeout. Ideally input is stored in a (y, x) tuple but I aint yo momma
