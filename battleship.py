@@ -1,4 +1,3 @@
-from re import X
 from inputimeout import inputimeout, TimeoutOccurred
 import random
 import time
@@ -126,7 +125,7 @@ class BattleshipBoard():
     def check_bomb_placement_validity(self, usr_input):
         usr_input = str(usr_input).upper()
         is_valid_bomb_target = False
-        error_message = 'ERROR: Please Enter a valid row(A-H) and column(0-7). Example: A5'
+        error_message = 'ERROR: Please Enter a valid row(A-H) and column(1-8). Example: A5'
         while is_valid_bomb_target is False:
             ## checks if the user_input if the length of user input is 2 or not
             if(len(usr_input) != 2):
@@ -195,12 +194,20 @@ class BattleshipBoard():
         try:
             self.writer.add_line(f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
             self.print_battle_board()
-            usr_input = inputimeout(prompt='"Enter row (A-H) and column (0-7) such as A5: " ', timeout=self.nseconds)
+            usr_input = inputimeout(prompt='"Enter row (A-H) and column (1-8) such as A5: " ', timeout=self.nseconds)
             self.update_battle_board_and_bomb_count(usr_input)
             
         except TimeoutOccurred:
             print('timeout!',self.nseconds,'seconds passed')
             self.user_time_out = True
+
+        # User has hit ctrl+c to exit the game
+        except KeyboardInterrupt:
+            self.writer.clear()
+            self.writer.add_line("\n")
+            self.display_message("Thanks for playing!")
+            self.writer.write()
+            self.game_over = True
 
     def main_game_loop(self):
         """Main entry point of application that runs the game loop"""
@@ -209,7 +216,6 @@ class BattleshipBoard():
         
         ## removed make_battle_board from the main game loop to prevent creating new board on every loop instance
         while self.is_running:
-            sys.stdout.flush()
             self.writer.add_line("Attempt #1 at Battleships")
             self.handle_user_input()
 
@@ -235,6 +241,10 @@ class BoardPrinter:
     def add_message_line(self, line):
         self.message.append(line)
 
+    def clear(self):
+        self.lines = []  
+        self.message = []
+
     def write(self):
         for _ in range(50): # 50 is arbitrary, but enough
             sys.stdout.write("\x1b[1A\x1b[2K") # move up cursor and delete whole line 
@@ -242,12 +252,12 @@ class BoardPrinter:
         for i in range(len(self.lines)):
             sys.stdout.write(self.lines[i] + "\n") 
 
+        # write message after printing board
         for m in range(len(self.message)):
             sys.stdout.write(self.message[m] + "\n") 
 
         # reset for next run
-        self.lines = []  
-        self.message = []
+        self.clear()
 
 
 if __name__ == '__main__':
