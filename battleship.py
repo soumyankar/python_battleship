@@ -122,48 +122,58 @@ class BattleshipBoard():
         # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
         self.writer.write()
 
-    def check_bomb_placement_validity(self, usr_input):
-        usr_input = str(usr_input).upper()
-        is_valid_bomb_target = False
-        error_message = 'ERROR: Please Enter a valid row(A-H) and column(1-8). Example: A5'
-        while is_valid_bomb_target is False:
-            ## checks if the user_input if the length of user input is 2 or not
-            if(len(usr_input) != 2):
-                self.display_message(error_message)
-                self.handle_user_input()
-                break
-            row = usr_input[0]
-            col = usr_input[1]
-            ## checks if the row is an alphabet and column is a number
-            if(not row.isalpha() or not col.isnumeric()):
-                self.display_message(error_message)
-                self.handle_user_input()
-                break
-            row = self.y_axis.find(row)
-            ##checks if the user entered row is outside of the battleboard
-            if not (-1 < row < self.battle_board_size):
-                self.display_message(error_message)
-                self.handle_user_input()
-                break
-            col = int(col)-1 # off by one
-            ##checks if the user entered column is outside of the battleboard
-            if not (-1 < col < self.battle_board_size):
-                self.display_message(error_message)
-                self.handle_user_input()
-                break
-            if self.battle_board[row][col] == "#" or self.battle_board[row][col] == "X":
-                self.display_message("You have already shot a bomb here, pick somewhere else")
-                self.handle_user_input()
-                break
-            if self.battle_board[row][col] == ".":
-                is_valid_bomb_target = True
-                self.bomb_count = self.bomb_count - 1
-        return row,col
+    def user_input_valid(self, usr_input):
+        # not valid, should only have size 1 for letter, and 1 for number
+        if(len(usr_input) < 2):
+            return False
+        
+        return True
+
+    def bomb_placement_valid(self, row, col, message):
+        ## checks if the row is an alphabet and column is a number
+        if(not row.isalpha() or not col.isnumeric()):
+            self.display_message(message)
+            return False
+
+        row = self.y_axis.find(row)
+        ##checks if the user entered row is outside of the battleboard
+        if not (-1 < row < self.battle_board_size):
+            self.display_message(message)
+            return False
+
+        col = int(col)-1 # off by one
+        ##checks if the user entered column is outside of the battleboard
+        if not (-1 < col < self.battle_board_size):
+            self.display_message(message)
+            return False
+
+        if self.battle_board[row][col] == "#" or self.battle_board[row][col] == "X":
+            self.display_message("You have already shot a bomb here, pick somewhere else")
+            return False
+
+        if self.battle_board[row][col] == ".":
+            return True
+
+        return False
+
 
 
     ## updates the 8x8 board and the bomb count after the bomb is hit
     def update_battle_board_and_bomb_count(self, usr_input):
-        row,col = self.check_bomb_placement_validity(usr_input)
+        error_message = 'ERROR: Please Enter a valid row(A-H) and column(1-8). Example: A5'
+        if not self.user_input_valid(usr_input):
+            return
+        
+        usr_input = str(usr_input).upper()
+        row = usr_input[0]
+        col = usr_input[1:]
+        if not self.bomb_placement_valid(row, col, error_message):
+            return
+        else:
+            self.bomb_count = self.bomb_count - 1
+
+        row = self.y_axis.find(row)
+        col = int(col)-1 # off by one
 
         #checks if the row,col value matches the key is ships dictionary
         if (str(row)+str(col)) in self.ships:
