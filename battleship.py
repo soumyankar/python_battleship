@@ -11,7 +11,6 @@ class BattleshipBoard():
     user_time_out = False
     game_over = False
     ships = {} # dict containing placements
-    ship_hit_counter = 0
     num_of_ships_destroyed = 0
     y_axis = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -122,9 +121,10 @@ class BattleshipBoard():
         # The line below is done because of some random printing bug, this fixed it. Unsure how, can take a look further on.
         self.writer.write()
 
-    def user_input_valid(self, usr_input):
+    def user_input_valid(self, usr_input, message):
         # not valid, should only have size 1 for letter, and 1 for number
         if(len(usr_input) < 2):
+            self.display_message(message)
             return False
         
         return True
@@ -161,7 +161,7 @@ class BattleshipBoard():
     ## updates the 8x8 board and the bomb count after the bomb is hit
     def update_battle_board_and_bomb_count(self, usr_input):
         error_message = 'ERROR: Please Enter a valid row(A-H) and column(1-8). Example: A5'
-        if not self.user_input_valid(usr_input):
+        if not self.user_input_valid(usr_input, error_message):
             return
         
         usr_input = str(usr_input).upper()
@@ -178,7 +178,6 @@ class BattleshipBoard():
         #checks if the row,col value matches the key is ships dictionary
         if (str(row)+str(col)) in self.ships:
             self.display_message("It's a hit!! A battleship was hit by your bomb.")
-            self.ship_hit_counter += 1
             self.battle_board[row][col] = "X"
             self.ships[f"{row}{col}"]["hit"] = True
             if self.check_for_ship_destroyed(row, col):
@@ -233,8 +232,8 @@ class BattleshipBoard():
             self.check_for_game_end_scenario()
 
     def check_for_game_end_scenario(self):
-        if(self.ship_hit_counter >= self.num_battleships * self.battleship_size):
-            print('Congratulations!! You have destroyed all the enemy battleships.')
+        if(self.num_of_ships_destroyed >= self.num_battleships):
+            print(f'Congratulations!! You have destroyed all the enemy battleships with {self.bomb_count} bombs remaining.')
             self.game_over = True
         elif(self.bomb_count <= 0):
             print('Game Over.You have depleted all of your remaining bombs.')
