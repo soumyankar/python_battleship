@@ -25,3 +25,31 @@ pip install -r requirements.txt
 ```zsh
 sh ./run.sh
 ```
+
+## Building Binary or Executable
+
+First, ensure that you are on the OS that you want to build for. e.g. to build a mac binary you must be on macOS.
+
+Then, run the make command for your OS, the options are:
+```
+make linux
+make mac
+make windows
+```
+
+## Running Built Code
+
+### Mac
+```
+./mac/battleship
+```
+
+### Linux
+```
+./linux/battleship
+```
+
+### Windows
+```
+./windows/battleship.exe
+```
