@@ -11,4 +11,4 @@ fi
 # Load .env file
 export $(egrep -v '^#' $DIR/.env | xargs)
 
-python ./battleship.py
+python3 ./battleship.py
