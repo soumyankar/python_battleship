@@ -241,10 +241,12 @@ class BattleshipBoard():
 
     def check_for_game_end_scenario(self):
         if(self.num_of_ships_destroyed >= self.num_battleships):
+            self.print_battle_board()
             print(
                 f'Congratulations!! You have destroyed all the 5 enemy battleships with {self.bomb_count} bombs remaining.')
             self.game_over = True
         elif(self.bomb_count <= 0):
+            self.print_battle_board()
             print('Game Over. You have depleted all of your remaining bombs.')
             self.game_over = True
 
