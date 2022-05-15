@@ -188,11 +188,9 @@ class BattleshipBoard():
             self.battle_board[row][col] = "X"
             self.ships[f"{row}{col}"]["hit"] = True
             if self.check_for_ship_destroyed(row, col):
+                self.num_of_ships_destroyed += 1
                 self.display_message(
                     "Hell Yeah!! A ship was completely destroyed!")
-                self.display_message(
-                    f'Ships destroyed: {self.num_of_ships_destroyed}/5')
-                self.num_of_ships_destroyed += 1
         else:
             self.display_message("It's a miss!! No battleship was hit.")
             self.battle_board[row][col] = "#"
