@@ -208,7 +208,7 @@ class BattleshipBoard():
         self.nseconds = 60
         try:
             self.writer.add_line(
-                f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships} battleships')
+                f'You have {self.bomb_count} bomb(s) left to take down {self.num_battleships - self.num_of_ships_destroyed} battleships')
             self.print_battle_board()
             usr_input = inputimeout(
                 prompt='"Enter row (A-H) and column (1-8) such as A5: " ', timeout=self.nseconds)
